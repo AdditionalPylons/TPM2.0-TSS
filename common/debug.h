@@ -43,6 +43,7 @@ int DebugPrintfCallback( void *data, printf_type type, const char *format, ...);
 int DebugPrintf( printf_type type, const char *format, ...);
 void DebugPrintBuffer( printf_type type, UINT8 *command_buffer, UINT32 cnt1 );
 const char* strTpmCommandCode( TPM_CC code );
+int DebugPrintBufferCallback( void *data, printf_type type, UINT8 *buffer, UINT32 length );
 
 #ifdef DEBUG
 #define DEBUG_PRINT_BUFFER( type, buffer, length )  DebugPrintBuffer( type, buffer, length )

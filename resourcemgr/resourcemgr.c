@@ -104,6 +104,37 @@ int GetNumRspHandles( TPM_CC commandCode, TPML_CCA *supportedCommands )
     return rval;
 }
 
+static TSS2_RC rmRecvBytes( SOCKET sock, unsigned char *data, int len )
+{
+    TSS2_RC result = 0;
+    result = recvBytes( sock, data, len);
+    if (result != TSS2_RC_SUCCESS) {
+        DebugPrintf( NO_PREFIX, "In rmRecvBytes, recv failed (socket: 0x%x) with error: %d\n", sock, WSAGetLastError() );
+        return TSS2_TCTI_RC_IO_ERROR;
+    }
+#ifdef DEBUG_SOCKETS
+    DebugPrintf( NO_PREFIX, "Receive Bytes from socket #0x%x: \n", sock );
+    DebugPrintBuffer( NO_PREFIX, data, len );
+#endif
+
+    return TSS2_RC_SUCCESS;
+}
+
+static TSS2_RC rmSendBytes( SOCKET sock, const unsigned char *data, int len )
+{
+    TSS2_RC ret = TSS2_RC_SUCCESS;
+
+#ifdef DEBUG_SOCKETS
+    DebugPrintf( NO_PREFIX, "Send Bytes to socket #0x%x: \n", sock );
+    DebugPrintBuffer( NO_PREFIX, (UINT8 *)data, len );
+#endif
+
+    ret = sendBytes( sock, data, len);
+    if (ret != TSS2_RC_SUCCESS)
+        DebugPrintf( NO_PREFIX, "In recvBytes, recv failed (socket: 0x%x) with error: %d\n", sock, WSAGetLastError() );
+    return ret;
+}
+
 int printRMTables = 0;
 int rmCommandDebug = 0;
 int commandDebug = 0;
@@ -1104,9 +1135,9 @@ void SendErrorResponse( SOCKET sock )
     UINT32 numBytes = CHANGE_ENDIAN_DWORD( sizeof( TPM20_ErrorResponse ) );
     UINT32 trash = 0;
 
-    sendBytes( sock, (char *)&numBytes, 4 );
-    sendBytes( sock, (char *)&errorResponse, sizeof( TPM20_ErrorResponse ) );
-    sendBytes( sock, (char *)&trash, 4 );        
+    rmSendBytes( sock, (unsigned char *)&numBytes, 4 );
+    rmSendBytes( sock, (unsigned char *)&errorResponse, sizeof( TPM20_ErrorResponse ) );
+    rmSendBytes( sock, (unsigned char *)&trash, 4 );
 }
 
 void CopyErrorResponse( UINT32 *response_size, uint8_t *response_buffer )
@@ -2171,13 +2202,13 @@ UINT8 TpmCmdServer( SERVER_STRUCT *serverStruct )
         }
         
         // Receive TPM Send or SESSION end command
-        rval = recvBytes( serverStruct->connectSock, (unsigned char*) &sendCmd, 4 );
+        rval = rmRecvBytes( serverStruct->connectSock, (unsigned char*) &sendCmd, 4 );
         if( rval != TSS2_RC_SUCCESS )
         {
             returnValue = 1;
             goto tpmCmdDone;
         }
-                 
+
         sendCmd = CHANGE_ENDIAN_DWORD( sendCmd );
 
         if( sendCmd == TPM_SESSION_END )
@@ -2192,7 +2223,7 @@ UINT8 TpmCmdServer( SERVER_STRUCT *serverStruct )
         {
 
             // Receive the locality.
-            rval = recvBytes( serverStruct->connectSock, (unsigned char*) &locality, 1 );
+            rval = rmRecvBytes( serverStruct->connectSock, (unsigned char*) &locality, 1 );
             if( rval != TSS2_RC_SUCCESS )
             {
                 CreateErrorResponse( TSS2_TCTI_RC_IO_ERROR );
@@ -2202,7 +2233,7 @@ UINT8 TpmCmdServer( SERVER_STRUCT *serverStruct )
             (( TSS2_TCTI_CONTEXT_INTEL *)downstreamTctiContext )->status.locality = locality;
 
             // Receive debug level.
-            rval = recvBytes( serverStruct->connectSock, (unsigned char*) &debugLevel, 1 );
+            rval = rmRecvBytes( serverStruct->connectSock, (unsigned char*) &debugLevel, 1 );
             if( rval != TSS2_RC_SUCCESS )
             {
                 CreateErrorResponse( TSS2_TCTI_RC_IO_ERROR );
@@ -2212,7 +2243,7 @@ UINT8 TpmCmdServer( SERVER_STRUCT *serverStruct )
             SetDebug( debugLevel );
 
             // Receive status bits.
-            rval = recvBytes( serverStruct->connectSock, (unsigned char*) &statusBits, 1 );
+            rval = rmRecvBytes( serverStruct->connectSock, (unsigned char*) &statusBits, 1 );
             if( rval != TSS2_RC_SUCCESS )
             {
                 CreateErrorResponse( TSS2_TCTI_RC_IO_ERROR );
@@ -2223,7 +2254,7 @@ UINT8 TpmCmdServer( SERVER_STRUCT *serverStruct )
             (( TSS2_TCTI_CONTEXT_INTEL *)downstreamTctiContext )->status.rmDebugPrefix = NO_PREFIX;
 
             // Receive number of bytes.
-            rval = recvBytes( serverStruct->connectSock, (unsigned char*) &numBytes, 4);
+            rval = rmRecvBytes( serverStruct->connectSock, (unsigned char*) &numBytes, 4);
             if( rval != TSS2_RC_SUCCESS )
             {
                 CreateErrorResponse( TSS2_TCTI_RC_IO_ERROR );
@@ -2234,7 +2265,7 @@ UINT8 TpmCmdServer( SERVER_STRUCT *serverStruct )
             numBytes = CHANGE_ENDIAN_DWORD( numBytes );
 
             // Receive the TPM command bytes from calling application.
-            rval = recvBytes( serverStruct->connectSock, (unsigned char *)cmdBuffer, numBytes);
+            rval = rmRecvBytes( serverStruct->connectSock, (unsigned char *)cmdBuffer, numBytes);
             if( rval != TSS2_RC_SUCCESS )
             {
                 CreateErrorResponse( TSS2_TCTI_RC_IO_ERROR );
@@ -2265,7 +2296,7 @@ UINT8 TpmCmdServer( SERVER_STRUCT *serverStruct )
             numBytes = CHANGE_ENDIAN_DWORD( numBytes );
 
             // Send size of TPM response to calling application.        
-            rval = sendBytes( serverStruct->connectSock, (char *)&numBytes, 4 );
+            rval = rmSendBytes( serverStruct->connectSock, (unsigned char *)&numBytes, 4 );
             if( rval != TSS2_RC_SUCCESS )
             {
                 returnValue = 1;
@@ -2275,7 +2306,7 @@ UINT8 TpmCmdServer( SERVER_STRUCT *serverStruct )
             numBytes = CHANGE_ENDIAN_DWORD( numBytes );
 
             // Send TPM or RM response to calling application.        
-            rval = sendBytes( serverStruct->connectSock, (char *)rspBuffer, numBytes );
+            rval = rmSendBytes( serverStruct->connectSock, (unsigned char *)rspBuffer, numBytes );
             if( rval != TSS2_RC_SUCCESS )
             {
                 returnValue = 1;
@@ -2283,7 +2314,7 @@ UINT8 TpmCmdServer( SERVER_STRUCT *serverStruct )
             }
 
             // Send the appended four bytes of 0's
-            sendBytes( serverStruct->connectSock, (char *)&trash, 4 );        
+            rmSendBytes( serverStruct->connectSock, (unsigned char *)&trash, 4 );
             if( rval != TSS2_RC_SUCCESS )
             {
                 returnValue = 1;
@@ -2367,13 +2398,12 @@ UINT8 OtherCmdServer( SERVER_STRUCT *serverStruct )
             goto retOtherCmdServer;
         }
 
-        rval = recvBytes( serverStruct->connectSock, (unsigned char*) &command, 4);
-
+        rval = rmRecvBytes( serverStruct->connectSock, (unsigned char*) &command, 4);
         if( rval != TSS2_RC_SUCCESS )
         {
             goto retOtherCmdServer;
         }
-        
+
         command = CHANGE_ENDIAN_DWORD( command );
         if( !simulator )
             continue;
@@ -2406,7 +2436,7 @@ UINT8 OtherCmdServer( SERVER_STRUCT *serverStruct )
         {
             rval = CHANGE_ENDIAN_DWORD( rval );
 
-            sendBytes( serverStruct->connectSock, (char *)&rval, 4 );
+            rmSendBytes( serverStruct->connectSock, (unsigned char *)&rval, 4 );
         }
         else
         {
@@ -2504,7 +2534,10 @@ const char *resDeviceTctiName = "device TCTI";
 const char *resSocketTctiName = "socket TCTI";
 TCTI_SOCKET_CONF simInterfaceConfig = {
     DEFAULT_HOSTNAME,
-    DEFAULT_SIMULATOR_TPM_PORT
+    DEFAULT_SIMULATOR_TPM_PORT,
+    DebugPrintfCallback,
+    DebugPrintBufferCallback,
+    NULL
 };
 
 SOCKET simOtherSock;
@@ -2892,7 +2925,7 @@ int main(int argc, char* argv[])
     ((TSS2_TCTI_CONTEXT_INTEL *)downstreamTctiContext )->status.debugMsgLevel = TSS2_TCTI_DEBUG_MSG_DISABLED;
 #endif        
 
-    if( 0 != InitSockets( appHostName, appPort, 1, &appOtherSock, &appTpmSock ) )
+    if( 0 != InitSockets( appHostName, appPort, 1, &appOtherSock, &appTpmSock, DebugPrintfCallback, NULL ) )
     {
         printf( "Resource Mgr, upstream interface to applications, failed to init sockets.  Exiting...\n" );
         closesocket( appOtherSock );

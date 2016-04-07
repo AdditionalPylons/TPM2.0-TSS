@@ -64,7 +64,7 @@ sysapi_libtss2_la_LDFLAGS = $(LIBRARY_LDFLAGS) -Wl,--no-undefined
 sysapi_libtss2_la_SOURCES = $(SYSAPI_C) $(SYSAPIUTIL_C)
 
 tcti_libtctidevice_la_CFLAGS   = $(TCTIDEVICE_INC)
-tcti_libtctidevice_la_LDFLAGS  = $(LIBRARY_LDFLAGS) \
+tcti_libtctidevice_la_LDFLAGS  = $(LIBRARY_LDFLAGS) -no-undefined \
     -Wl,--version-script=$(srcdir)/tcti/tcti_device.map
 tcti_libtctidevice_la_SOURCES  = common/debug.c $(TCTIDEVICE_C) \
     sysapi/sysapi_util/changeEndian.c $(TCTICOMMON_C)
