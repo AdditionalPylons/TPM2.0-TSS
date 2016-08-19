@@ -20,6 +20,23 @@ TSS2_RC InitDeviceTctiContext( const TCTI_DEVICE_CONF *driverConfig, TSS2_TCTI_C
 }
 #endif //_WIN32
 
+#ifdef _WIN32
+TSS2_RC InitTbsTctiContext(const TCTI_TBS_CONF *config, TSS2_TCTI_CONTEXT **tctiContext)
+{
+	size_t size;
+	TSS2_RC rval = TSS2_RC_SUCCESS;
+	rval = InitTbsTcti(NULL, &size, config);
+	if (rval != TSS2_RC_SUCCESS)
+		return rval;
+
+	*tctiContext = malloc(size);
+
+	DebugPrintf(NO_PREFIX, "Initializing Tbs TCTI Interface\n");
+	rval = InitTbsTcti(*tctiContext, &size, config);
+	return rval;
+}
+#endif
+
 TSS2_RC
 InitSocketTctiContext (const TCTI_SOCKET_CONF  *device_conf,
                        TSS2_TCTI_CONTEXT      **tcti_context)

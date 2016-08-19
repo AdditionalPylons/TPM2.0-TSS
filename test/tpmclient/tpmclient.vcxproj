@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -20,14 +20,14 @@
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v100</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v100</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -56,13 +56,13 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions);SAPI_CLIENT;DEBUG</PreprocessorDefinitions>
       <StructMemberAlignment>1Byte</StructMemberAlignment>
-      <AdditionalIncludeDirectories>..\..\include;.\; ..\common\sample;..\..\resourcemgr\;..\..\common;..\..\sysapi\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include;.\;..\common\sample;..\..\resourcemgr\;..\..\common;..\..\sysapi\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>..\..\sysapi\lib\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;tpm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;tbs.lib;tpm.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <StackCommitSize>
       </StackCommitSize>
@@ -100,6 +100,7 @@
     <ClInclude Include="..\..\common\syscontext.h" />
     <ClInclude Include="..\..\common\tcti_util.h" />
     <ClInclude Include="..\..\include\tcti\tcti_socket.h" />
+    <ClInclude Include="..\..\include\tcti\tcti_tbs.h" />
     <ClInclude Include="..\..\sysapi\include\endianConv.h" />
     <ClInclude Include="..\..\tcti\commonchecks.h" />
     <ClInclude Include="..\common\sample\sample.h" />
@@ -115,6 +116,7 @@
     <ClCompile Include="..\..\tcti\commonchecks.c" />
     <ClCompile Include="..\..\tcti\platformcommand.c" />
     <ClCompile Include="..\..\tcti\tcti_socket.cpp" />
+    <ClCompile Include="..\..\tcti\tcti_tbs.cpp" />
     <ClCompile Include="..\common\sample\CatSizedByteBuffer.c" />
     <ClCompile Include="..\common\sample\CopySizedBuffer.c" />
     <ClCompile Include="..\common\sample\CreateNullSession.c" />

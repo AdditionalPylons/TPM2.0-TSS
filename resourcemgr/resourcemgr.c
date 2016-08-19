@@ -31,6 +31,9 @@
 #include <sapi/tpm20.h>
 #include <tcti/tcti_device.h>
 #include <tcti/tcti_socket.h>
+#ifdef _WIN32
+#include <tcti/tcti_tbs.h>
+#endif // WIN32
 #include "tcti_util.h"
 #include "resourcemgr.h"
 //#include <sample.h>
@@ -2734,6 +2737,14 @@ UINT32 WINAPI SockServer( LPVOID servStruct )
 
 const char *resDeviceTctiName = "device TCTI";
 const char *resSocketTctiName = "socket TCTI";
+const char *resTbsTctiName = "tbs TCTI";
+
+TCTI_TBS_CONF tbsInterfaceConfig = {
+	DebugPrintfCallback,
+	DebugPrintBufferCallback,
+	NULL
+};
+
 TCTI_SOCKET_CONF simInterfaceConfig = {
     DEFAULT_HOSTNAME,
     DEFAULT_SIMULATOR_TPM_PORT,
@@ -3089,6 +3100,19 @@ int main(int argc, char* argv[])
         }
     }
     else
+#endif
+#if _WIN32
+	if(!simulator) 
+	{
+		// Use TBS driver for Windows TPM
+		rval = InitTbsTctiContext(&tbsInterfaceConfig, &downstreamTctiContext);
+		if (rval != TSS2_RC_SUCCESS)
+		{
+			DebugPrintf(NO_PREFIX, "Resource Mgr, %s, failed initialization: 0x%x,  Exiting...\n", resTbsTctiName, rval);
+			return 1;
+		}
+	}
+	else
 #endif
     {
         rval = InitSocketTctiContext( &simInterfaceConfig, &downstreamTctiContext );

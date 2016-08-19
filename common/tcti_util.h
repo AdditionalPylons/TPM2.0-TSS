@@ -5,6 +5,9 @@
 #ifndef _WIN32
 #include <tcti/tcti_device.h>
 #endif //_WIN32
+#ifdef _WIN32
+#include <tcti/tcti_tbs.h>
+#endif
 #include <tcti/tcti_socket.h>
 
 #ifdef __cplusplus
@@ -14,6 +17,9 @@ extern "C" {
 #ifndef _WIN32
 TSS2_RC InitDeviceTctiContext( const TCTI_DEVICE_CONF *config, TSS2_TCTI_CONTEXT **tctiContext, const char *deviceTctiName );
 #endif //_WIN32
+#ifdef _WIN32
+TSS2_RC InitTbsTctiContext(const TCTI_TBS_CONF *config, TSS2_TCTI_CONTEXT **tctiContext);
+#endif
 TSS2_RC InitSocketTctiContext (const TCTI_SOCKET_CONF  *device_conf,
                                TSS2_TCTI_CONTEXT      **tcti_context);
 void TeardownTctiContext(TSS2_TCTI_CONTEXT **tctiContext);

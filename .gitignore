@@ -44,3 +44,5 @@ test/*_unit
 test/tcti_device
 test/*.log
 test/*.trs
+tss.VC.VC.opendb
+tss.VC.db

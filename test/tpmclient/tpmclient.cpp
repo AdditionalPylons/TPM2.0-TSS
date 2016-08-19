@@ -111,6 +111,9 @@ UINT8 simulator = 1;
 #if __linux || __unix
 UINT8 testLocalTcti = 0;
 #endif
+#ifdef _WIN32
+UINT8 testWindowsTbsTcti = 0;
+#endif
 
 UINT32 tpmMaxResponseLen = TPMBUF_LEN;
 
@@ -7172,6 +7175,41 @@ void TestLocalTCTI()
 }
 #endif
 
+#ifdef _WIN32
+void TestWindowsTbsTcti()
+{
+	TSS2_RC rval = TSS2_RC_SUCCESS;
+	DebugPrintf(NO_PREFIX, "\nWINDOWS TBS TCTI TESTS:\n");
+	DebugPrintf(NO_PREFIX, "WARNING!!  This test requires that a local TPM is present, that the resource manager has NOT been started, and that the Windows TBS service is started and running.\n\n");
+	
+	TSS2_TCTI_CONTEXT *downstreamTctiContext;
+	TCTI_TBS_CONF conf = {
+		DebugPrintfCallback,
+		DebugPrintBufferCallback,
+		NULL
+	};
+	rval = InitTbsTctiContext(&conf, &downstreamTctiContext);
+	if (rval != TSS2_RC_SUCCESS)
+	{
+		DebugPrintf(NO_PREFIX, "Resource Mgr, %s, failed initialization: 0x%x.  Exiting...\n", "Windows TBS TPM", rval);
+		CheckPassed(rval);
+	}
+	else
+	{
+		if (debugLevel == DBG_COMMAND)
+		{
+			((TSS2_TCTI_CONTEXT_INTEL *)downstreamTctiContext)->status.debugMsgEnabled = debugLevel;
+		}
+
+		TestTctiApis(downstreamTctiContext, 0);
+
+		TeardownTctiContext(&downstreamTctiContext);
+
+		exit(0);
+	}
+}
+#endif
+
 void TpmTest()
 {
     TSS2_RC rval = TSS2_RC_SUCCESS;
@@ -7420,6 +7458,12 @@ int main(int argc, char* argv[])
                 testLocalTcti = 1;
             }
 #endif
+#ifdef _WIN32
+			else if (0 == strcmp(argv[count], "-windowsTbsTest"))
+			{
+				testWindowsTbsTcti = 1;
+			}
+#endif
             else
             {
                 PrintHelp();
@@ -7432,6 +7476,12 @@ int main(int argc, char* argv[])
     {
         TestLocalTCTI();
     }
+#endif
+#ifdef _WIN32
+	if (testWindowsTbsTcti)
+	{
+		TestWindowsTbsTcti();
+	}
 #endif
 
     rval = InitSocketTctiContext( &rmInterfaceConfig, &resMgrTctiContext);
